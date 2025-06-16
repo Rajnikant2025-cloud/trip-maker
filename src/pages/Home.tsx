@@ -221,27 +221,48 @@ const Home: React.FC = () => {
       </section>
 
       {/* Categories Section */}
-      <section className="max-w-6xl mx-auto px-6 pt-32 animate-slide-up">
-        <h2 className="text-3xl font-bold text-center mb-8">Explore Categories</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {['Domestic', 'International', 'Honeymoon', 'Adventure'].map((category, idx) => (
-            <div
-              key={category}
-              className="relative bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300"
-              style={{ animationDelay: `${idx * 100}ms` }}
-            >
-              <img
-                src={`https://images.unsplash.com/photo-${category === 'Domestic' ? '1542296337' : category === 'International' ? '1539367628448' : category === 'Honeymoon' ? '1558442086' : '1552465011'}`}
-                alt={category}
-                className="w-full h-40 object-cover"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                <h3 className="text-white text-xl font-semibold">{category}</h3>
-              </div>
-            </div>
-          ))}
+      {/* Categories Section */}
+<section className="max-w-6xl mx-auto px-6 pt-32 animate-slide-up">
+  <h2 className="text-3xl font-bold text-center mb-8">Explore Categories</h2>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+    {[
+      { 
+        category: 'Domestic', 
+        image: 'https://images.unsplash.com/photo-1503917988258-f87a78e3c995?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' 
+      },
+      { 
+        category: 'International', 
+        image: 'https://images.unsplash.com/photo-1431274172761-fca41d930114?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' 
+      },
+      { 
+        category: 'Honeymoon', 
+        image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' 
+      },
+      { 
+        category: 'Adventure', 
+        image: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' 
+      }
+    ].map((item, idx) => (
+      <div
+        key={item.category}
+        className="relative bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300"
+        style={{ animationDelay: `${idx * 100}ms` }}
+      >
+        <img
+          src={item.image}
+          alt={item.category}
+          className="w-full h-40 object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/500x300?text=' + item.category;
+          }}
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+          <h3 className="text-white text-xl font-semibold">{item.category}</h3>
         </div>
-      </section>
+      </div>
+    ))}
+  </div>
+</section>
 
       {/* Popular Destinations Section */}
       <section className="max-w-6xl mx-auto px-6 py-12 bg-background rounded-lg animate-slide-up">
