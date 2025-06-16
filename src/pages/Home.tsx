@@ -221,7 +221,6 @@ const Home: React.FC = () => {
       </section>
 
       {/* Categories Section */}
-      {/* Categories Section */}
 <section className="max-w-6xl mx-auto px-6 pt-32 animate-slide-up">
   <h2 className="text-3xl font-bold text-center mb-8">Explore Categories</h2>
   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
