@@ -13,18 +13,27 @@ const Packages: React.FC = () => {
       </Helmet>
       <h2 className="mb-6 text-3xl font-bold text-gray-800">Travel Packages</h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Card
-          image="https://images.unsplash.com/photo-1499856871958-5b962e25677b?auto=format&fit=crop&w=400&q=80"
-          title="Paris Getaway"
-          description="$1200 - 5 days, 4 nights."
-          action={{ label: 'Book Now', onClick: () => alert('Booking Paris Getaway') }}
-        />
-        <Card
-          image="https://images.unsplash.com/photo-1528030137958-3b9e0e7d6e4b?auto=format&fit=crop&w=400&q=80"
-          title="Bali Retreat"
-          description="$1500 - 7 days, 6 nights."
-          action={{ label: 'Book Now', onClick: () => alert('Booking Bali Retreat') }}
-        />
+       <Card
+  imageSources={[
+    "https://images.unsplash.com/photo-1499856871958-5b962e25677b?ixlib=rb-4.0.3&w=800&h=600&fit=crop",
+    "https://source.unsplash.com/featured/800x600/?paris,eiffel+tower",
+    "https://picsum.photos/id/1005/800/600"
+  ]}
+  title="Paris Getaway"
+  description="$1200 - 5 days, 4 nights."
+  action={{ label: 'Book Now', onClick: () => alert('Booking Paris Getaway') }}
+/>
+
+       <Card
+  imageSources={[
+    "https://images.unsplash.com/photo-1528030137958-3b9e0e7d6e4b?ixlib=rb-4.0.3&w=800&h=600&fit=crop",
+    "https://source.unsplash.com/featured/800x600/?bali,beach",
+    "https://picsum.photos/id/1018/800/600"
+  ]}
+  title="Bali Retreat"
+  description="$1500 - 7 days, 6 nights."
+  action={{ label: 'Book Now', onClick: () => alert('Booking Bali Retreat') }}
+/>
       </div>
     </div>
   );

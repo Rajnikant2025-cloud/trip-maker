@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useStore } from 'zustand';
 import { filterStore } from '../store/filterStore';
 import { useScrollTop } from '../hooks/useScrollTop';
+import { Link } from 'react-router-dom';
 //
 
 // Hero slider images
@@ -375,10 +376,38 @@ const Home: React.FC = () => {
       </section>
 
       {/* Popular Destinations Section */}
-      <section className="max-w-6xl mx-auto px-6 py-12 animate-slide-up">
-  <h2 className="text-3xl font-bold text-center mb-8">
-    <i className="fas fa-bolt text-yellow-500 mr-2"></i>Deal of the day
-  </h2>
+      <section className="max-w-6xl mx-auto px-6 py-12 animate-slide-up relative">
+  <div className="flex justify-between items-center mb-8">
+    <h2 className="text-3xl font-bold text-center w-full">
+      <i className="fas fa-bolt text-yellow-500 mr-2"></i>Deal of the day
+    </h2>
+    <div className="absolute right-6 top-12 group">
+  <button className="flex items-center text-primary font-semibold bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all">
+    View All <i className="fas fa-chevron-down ml-2 text-sm"></i>
+  </button>
+  <div className="absolute right-0 mt-1 w-48 bg-white shadow-lg rounded-md py-1 z-10 hidden group-hover:block border border-gray-100">
+    <Link 
+      to="/all-deals" 
+      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
+    >
+      <i className="fas fa-list mr-2"></i>All Deals
+    </Link>
+    <Link 
+      to="/domestic-deals" 
+      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
+    >
+      <i className="fas fa-home mr-2"></i>Domestic
+    </Link>
+    <Link 
+      to="/international-deals" 
+      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
+    >
+      <i className="fas fa-plane mr-2"></i>International
+    </Link>
+  </div>
+</div>
+  </div>
+  
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     {popularDestinations.map((destination) => (
       <div key={destination.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300 flex flex-col">

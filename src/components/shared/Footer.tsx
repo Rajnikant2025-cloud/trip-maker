@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import wanderonBadge from '../../../src/assets/images/hero1.jpg'; 
+import wanderonBadge from '../../../src/assets/images/hero1.jpg';
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -17,6 +17,18 @@ const Footer: React.FC = () => {
   const onSubmit = (data: FormData) => {
     alert(`Subscribed with email: ${data.email}`);
     reset();
+  };
+
+  // Social media URLs
+  const socialLinks = {
+    facebook: 'https://www.facebook.com/wanderon.in/',
+    instagram: 'https://www.instagram.com/wanderon.in/',
+    twitter: 'https://twitter.com/wanderon_in',
+    youtube: 'https://www.youtube.com/channel/UC5j8H3Q2Hr3gBXsZqjWUjEg'
+  };
+
+  const handleSocialClick = (platform: keyof typeof socialLinks) => {
+    window.open(socialLinks[platform], '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -99,18 +111,34 @@ const Footer: React.FC = () => {
             &copy; {new Date().getFullYear()} WANDERON EXPERIENCES PVT LTD. All rights reserved.
           </p>
           <div className="flex space-x-4">
-            <a href="#" className="text-gray-400 hover:text-white">
+            <button
+              onClick={() => handleSocialClick('facebook')}
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Facebook"
+            >
               <i className="fab fa-facebook-f"></i>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-white">
+            </button>
+            <button
+              onClick={() => handleSocialClick('instagram')}
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Instagram"
+            >
               <i className="fab fa-instagram"></i>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-white">
+            </button>
+            <button
+              onClick={() => handleSocialClick('twitter')}
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Twitter"
+            >
               <i className="fab fa-twitter"></i>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-white">
+            </button>
+            <button
+              onClick={() => handleSocialClick('youtube')}
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="YouTube"
+            >
               <i className="fab fa-youtube"></i>
-            </a>
+            </button>
           </div>
         </div>
       </div>
