@@ -1,6 +1,7 @@
 // src/pages/AllDeals.tsx
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useScrollTop } from '../hooks/useScrollTop'; // Make sure path is correct
 
 const WORKING_IMAGE_URLS = {
   // Domestic deals
@@ -34,6 +35,8 @@ const WORKING_IMAGE_URLS = {
 export default function AllDeals() {
   const navigate = useNavigate();
   const [deals, setDeals] = useState<any[]>([]);
+
+  useScrollTop(); 
 
   useEffect(() => {
     const initialDeals = [
