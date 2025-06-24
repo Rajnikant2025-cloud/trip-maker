@@ -387,7 +387,7 @@ const Home: React.FC = () => {
   </button>
   <div className="absolute right-0 mt-1 w-48 bg-white shadow-lg rounded-md py-1 z-10 hidden group-hover:block border border-gray-100">
     <Link 
-      to="/all-deals" 
+      to="/alldeals" 
       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
     >
       <i className="fas fa-list mr-2"></i>All Deals

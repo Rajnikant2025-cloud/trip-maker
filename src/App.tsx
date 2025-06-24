@@ -12,6 +12,9 @@ import About from './pages/About.tsx';
 import Contact from './pages/Contact.tsx';
 import Terms from './pages/Terms.tsx';
 import NotFound from './pages/NotFound.tsx';
+import AllDeals from './pages/AllDeals.tsx';
+import DomesticDeals from './pages/DomesticDeals.tsx';
+import InternationalDeals from './pages/InternationalDeals.tsx'
 
 const App: React.FC = () => {
   // State to manage sidebar visibility
@@ -29,9 +32,12 @@ const App: React.FC = () => {
         <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} />
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<Home />} /> {/* Fixed: Changed from /home to / */}
+            <Route path="/" element={<Home />} /> 
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/packages" element={<Packages />} />
+            <Route path="/alldeals" element={<AllDeals />} />
+            <Route path="/domestic-deals" element={<DomesticDeals />} />
+             <Route path="/international-deals" element={<InternationalDeals />} />
             <Route path="/booking/:packageId" element={<Booking />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
