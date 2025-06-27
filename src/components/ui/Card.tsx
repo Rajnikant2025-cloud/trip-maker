@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Star } from 'lucide-react';
 
 interface CardProps {
@@ -27,10 +28,21 @@ const Card: React.FC<CardProps> = ({
   price = 0,
   oldPrice = 0,
   savings = 0,
-  rating = 0
+  rating = 0,
 }) => {
+  const [imageIndex, setImageIndex] = useState(0);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    if (imageIndex < imageSources.length - 1) {
+      setImageIndex((prev) => prev + 1);
+    } else {
+      setImageError(true);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden border relative">
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden border relative flex flex-col h-full">
       {/* Discount Badge */}
       {savings > 0 && (
         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded z-10">
@@ -44,55 +56,68 @@ const Card: React.FC<CardProps> = ({
         <span>{rating.toFixed(1)}</span>
       </div>
 
-      {/* Image Placeholder */}
+      {/* Image Section */}
       <div className="h-48 bg-gray-100 flex items-center justify-center">
-        <img
-          src={imageSources[0]}
-          alt={title}
-          className="object-cover h-full w-full"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = imageSources[1] || '';
-          }}
-        />
+        {imageError ? (
+          <img
+            src="https://via.placeholder.com/800x600?text=No+Image"
+            alt="Unavailable"
+            className="object-cover h-full w-full"
+          />
+        ) : (
+          <img
+            src={imageSources[imageIndex]}
+            alt={title}
+            className="object-cover h-full w-full"
+            onError={handleImageError}
+            loading="lazy"
+          />
+        )}
       </div>
 
-      <div className="p-4">
-        <p className="text-sm text-gray-500 mb-1">{location}</p>
-        <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
-        <p className="text-sm text-gray-600 mb-2">{description}</p>
+      {/* Content Section */}
+      <div className="flex flex-col justify-between flex-1 p-4">
+        {/* Top Content */}
+        <div>
+          <p className="text-sm text-gray-500 mb-1">{location}</p>
+          <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+          <p className="text-sm text-gray-600 mb-2">{description}</p>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
-            >
-              {tag}
+          {/* Tags */}
+          <div className="flex flex-wrap gap-2 mb-2">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Info Row */}
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <span>{duration}</span>
+            <span>{groupSize}</span>
+            <span>({reviews} reviews)</span>
+          </div>
+
+          {/* Price Row */}
+          <div className="mb-2">
+            <span className="text-lg font-bold text-green-600 mr-2">
+              ${price}
             </span>
-          ))}
+            {oldPrice > 0 && (
+              <span className="line-through text-sm text-gray-400">
+                ${oldPrice}
+              </span>
+            )}
+            <span className="block text-sm text-gray-500">per person</span>
+          </div>
         </div>
 
-        {/* Info Row */}
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-          <span>{duration}</span>
-          <span>{groupSize}</span>
-          <span>({reviews} reviews)</span>
-        </div>
-
-        {/* Price Row */}
-        <div className="mb-4">
-          <span className="text-lg font-bold text-green-600 mr-2">
-            ${price}
-          </span>
-          {oldPrice > 0 && (
-            <span className="line-through text-sm text-gray-400">${oldPrice}</span>
-          )}
-          <span className="block text-sm text-gray-500">per person</span>
-        </div>
-
-        {/* Button */}
-        <button className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900">
+        {/* Book Button (at bottom) */}
+        <button className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900 mt-4">
           Book Now
         </button>
       </div>
