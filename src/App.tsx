@@ -15,6 +15,8 @@ import NotFound from './pages/NotFound.tsx';
 import AllDeals from './pages/AllDeals.tsx';
 import DomesticDeals from './pages/DomesticDeals.tsx';
 import InternationalDeals from './pages/InternationalDeals.tsx'
+import Test from './pages/Test.tsx'
+import CartPage from './pages/CartPage.tsx';
 
 const App: React.FC = () => {
   // State to manage sidebar visibility
@@ -43,6 +45,9 @@ const App: React.FC = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<NotFound />} />
+             <Route path="/test" element={<Test />} />
+             <Route path="/cart" element={<CartPage />} />
+
           </Routes>
         </main>
         <Footer />

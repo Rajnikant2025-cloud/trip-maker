@@ -2,9 +2,10 @@ import { NavLink } from 'react-router-dom';
 
 interface HeaderProps {
   toggleSidebar: () => void;
+  cartItemCount?: number; // Optional prop for cart item count
 }
 
-const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({ toggleSidebar, cartItemCount = 0 }) => {
   return (
     <nav className="bg-primary text-white p-4 shadow-lg">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
@@ -50,6 +51,22 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           >
             <i className="fas fa-envelope mr-2"></i> Contact
           </NavLink>
+          
+          {/* Cart Icon with Badge */}
+          <NavLink
+            to="/cart"
+            className={({ isActive }) =>
+              `flex items-center relative ${isActive ? 'text-white' : 'text-indigo-100'} hover:text-white`
+            }
+          >
+            <i className="fas fa-shopping-cart text-xl"></i>
+            {cartItemCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
+          </NavLink>
+          
           <button onClick={toggleSidebar} className="text-indigo-100 hover:text-white">
             <i className="fas fa-bars text-2xl"></i>
           </button>

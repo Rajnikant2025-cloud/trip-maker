@@ -14,6 +14,7 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 const AllDeals = lazy(() => import('../pages/AllDeals'));
 const DomesticDeals = lazy(() => import('../pages/DomesticDeals'));
 const InternationalDeals = lazy(() => import('../pages/InternationalDeals'));
+const Test = lazy(() => import('../pages/Test'));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -31,6 +32,7 @@ const AppRoutes: React.FC = () => {
           <Route path="contact" element={<Contact />} />
           <Route path="terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="test" element={<Test />} />
         </Route>
       </Routes>
     </Suspense>

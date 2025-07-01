@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useScrollTop } from '../hooks/useScrollTop';
 import SidebarFilters from '../components/SidebarFilters';
+import { FaShoppingCart } from 'react-icons/fa';
 
 // Centralized type definitions
 type Theme = 'Beach' | 'Adventure' | 'Luxury' | 'Romance' | 'Shopping' | 'Cultural';
@@ -33,6 +34,11 @@ interface Deal {
   highlights: string[];
   imageUrls: string[];
   tags: Theme[];
+}
+
+interface CartItem {
+  dealId: number;
+  quantity: number;
 }
 
 const WORKING_IMAGE_URLS = {
@@ -72,6 +78,7 @@ export default function InternationalDeals() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [filteredDeals, setFilteredDeals] = useState<Deal[]>([]);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [cart, setCart] = useState<CartItem[]>([]);
 
   useScrollTop();
 
@@ -118,31 +125,15 @@ export default function InternationalDeals() {
 
   useEffect(() => {
     const filtered = deals.filter(deal => {
-      // Search filter
-      if (filters.search && !deal.name.toLowerCase().includes(filters.search.toLowerCase())) {
-        return false;
-      }
-
-      // Price filter
+      if (filters.search && !deal.name.toLowerCase().includes(filters.search.toLowerCase())) return false;
       const priceNumber = parseInt(deal.price.replace(/[^\d]/g, ''), 10);
-      if (priceNumber < filters.priceRange[0] || priceNumber > filters.priceRange[1]) {
-        return false;
-      }
-
-      // Duration filter
+      if (priceNumber < filters.priceRange[0] || priceNumber > filters.priceRange[1]) return false;
       const nights = parseInt(deal.duration.split('N')[0], 10);
       if (filters.duration === '1-3' && (nights < 1 || nights > 3)) return false;
       if (filters.duration === '4-7' && (nights < 4 || nights > 7)) return false;
       if (filters.duration === '7+' && nights <= 7) return false;
-
-      // Theme filter
-      const activeThemes = (Object.keys(filters.themes) as Theme[])
-        .filter(theme => filters.themes[theme]);
-      
-      if (activeThemes.length > 0 && !activeThemes.some(theme => deal.tags.includes(theme))) {
-        return false;
-      }
-
+      const activeThemes = (Object.keys(filters.themes) as Theme[]).filter(theme => filters.themes[theme]);
+      if (activeThemes.length > 0 && !activeThemes.some(theme => deal.tags.includes(theme))) return false;
       return true;
     });
     setFilteredDeals(filtered);
@@ -153,12 +144,11 @@ export default function InternationalDeals() {
     const currentSrc = img.src;
     const urls = deal.imageUrls;
     const currentIndex = urls.indexOf(currentSrc);
-    
     if (currentIndex < urls.length - 1) {
       img.src = urls[currentIndex + 1];
     } else {
       img.src = `https://via.placeholder.com/800x500/cccccc/969696?text=${encodeURIComponent(deal.name)}`;
-      img.className = "w-full h-full object-cover opacity-70";
+      img.className = 'w-full h-full object-cover opacity-70';
     }
   };
 
@@ -166,13 +156,59 @@ export default function InternationalDeals() {
     setFilters(DEFAULT_FILTERS);
   };
 
+  const addToCart = (dealId: number) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.dealId === dealId);
+      if (existing) {
+        return prev.map(item =>
+          item.dealId === dealId ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prev, { dealId, quantity: 1 }];
+    });
+  };
+
+  const goToCart = () => {
+    navigate('/cart', {
+      state: {
+        cartItems: cart,
+        allDeals: deals
+      }
+    });
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">
+          <i className="fas fa-plane mr-2 text-purple-500"></i>
+          International Travel Deals
+        </h1>
+        <div className="flex gap-4 items-center">
+          <button
+            onClick={goToCart}
+            className="relative text-purple-600 hover:text-purple-800"
+          >
+            <FaShoppingCart size={24} />
+            {cart.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs px-1">
+                {cart.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => navigate(-1)}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            <i className="fas fa-arrow-left mr-2"></i> Back to Home
+          </button>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Sidebar Filters */}
         <div className="w-full md:w-64 flex-shrink-0">
           <div className="sticky top-4">
-            <SidebarFilters 
+            <SidebarFilters
               onFiltersChange={setFilters}
               minPrice={0}
               maxPrice={200000}
@@ -181,25 +217,14 @@ export default function InternationalDeals() {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">
-              <i className="fas fa-plane mr-2 text-purple-500"></i>
-              International Travel Deals
-            </h1>
-            <button 
-              onClick={() => navigate(-1)} 
-              className="flex items-center text-blue-600 hover:text-blue-800"
-            >
-              <i className="fas fa-arrow-left mr-2"></i> Back to Home
-            </button>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredDeals.length > 0 ? (
               filteredDeals.map((deal) => (
-                <div key={deal.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div
+                  key={deal.id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                >
                   <div className="h-48 overflow-hidden bg-gray-100 relative">
                     <img
                       src={deal.imageUrls[0]}
@@ -210,7 +235,7 @@ export default function InternationalDeals() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                   </div>
-                  
+
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-2">
                       <h2 className="text-xl font-bold">{deal.name}</h2>
@@ -218,17 +243,17 @@ export default function InternationalDeals() {
                         {deal.discount}
                       </span>
                     </div>
-                    
+
                     <p className="text-gray-600 mb-3">
                       <i className="far fa-clock mr-2"></i>
                       {deal.duration}
                     </p>
-                    
+
                     <div className="flex items-center mb-4">
                       <span className="text-2xl font-bold text-purple-600">{deal.price}</span>
                       <span className="ml-2 text-gray-500 line-through">{deal.originalPrice}</span>
                     </div>
-                    
+
                     <div className="border-t border-gray-200 pt-3">
                       <h3 className="font-semibold mb-2">
                         <i className="fas fa-star mr-2 text-yellow-400"></i>
@@ -243,13 +268,13 @@ export default function InternationalDeals() {
                         ))}
                       </ul>
                     </div>
-                    
-                    <button 
-                      onClick={() => navigate(`/deal/${deal.id}`)}
+
+                    <button
+                      onClick={() => addToCart(deal.id)}
                       className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md transition-colors duration-300"
                     >
-                      <i className="fas fa-shopping-cart mr-2"></i>
-                      Book Now
+                      <i className="fas fa-cart-plus mr-2"></i>
+                      Add to Cart
                     </button>
                   </div>
                 </div>
@@ -258,7 +283,7 @@ export default function InternationalDeals() {
               <div className="col-span-full text-center py-12">
                 <h3 className="text-xl font-medium text-gray-700 mb-2">No deals match your filters</h3>
                 <p className="text-gray-500 mb-4">Try adjusting your search criteria</p>
-                <button 
+                <button
                   onClick={handleResetFilters}
                   className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors duration-300"
                 >

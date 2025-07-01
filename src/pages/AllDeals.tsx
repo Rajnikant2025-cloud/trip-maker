@@ -1,7 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useScrollTop } from '../hooks/useScrollTop';
 import SidebarFilters, { Filters } from '../components/SidebarFilters';
+import { useLocation } from 'react-router-dom';
+
+
 
 interface Deal {
   id: number;
@@ -46,6 +49,7 @@ const WORKING_IMAGE_URLS = {
 
 export default function AllDeals() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [filters, setFilters] = useState<Filters>({
     search: '',
@@ -59,6 +63,20 @@ export default function AllDeals() {
     }
   });
   const [filteredDeals, setFilteredDeals] = useState<Deal[]>([]);
+  type CartItem = {
+  dealId: number;
+  quantity: number;
+};
+
+const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+ // Initialize cart from navigation state
+  useEffect(() => {
+    if (location.state?.cartItems) {
+      setCartItems(location.state.cartItems);
+    }
+  }, [location.state]);
+
 
   useScrollTop();
 
@@ -204,6 +222,25 @@ export default function AllDeals() {
     }
   };
 
+ const handleAddToCart = (dealId: number) => {
+  setCartItems((prev) => {
+    const existing = prev.find(item => item.dealId === dealId);
+    if (existing) {
+      return prev.map(item =>
+        item.dealId === dealId
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+    } else {
+      return [...prev, { dealId, quantity: 1 }];
+    }
+  });
+};
+
+  const handleBookNow = (dealId: number) => {
+    navigate(`/booking/${dealId}`);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row gap-8">
@@ -223,12 +260,28 @@ export default function AllDeals() {
               <i className="fas fa-list mr-2 text-blue-500"></i>
               All Travel Deals
             </h1>
-            <button 
-              onClick={() => navigate(-1)} 
-              className="flex items-center text-blue-600 hover:text-blue-800"
-            >
-              <i className="fas fa-arrow-left mr-2"></i> Back to Home
-            </button>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <button 
+  className="flex items-center text-blue-600 hover:text-blue-800"
+  onClick={() => navigate('/cart', { state: { cartItems, allDeals: deals } })}
+>
+  <i className="fas fa-shopping-cart text-2xl"></i>
+  {cartItems.length > 0 && (
+    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+      {cartItems.length}
+    </span>
+  )}
+</button>
+
+              </div>
+              <button 
+                onClick={() => navigate(-1)} 
+                className="flex items-center text-blue-600 hover:text-blue-800"
+              >
+                <i className="fas fa-arrow-left mr-2"></i> Back to Home
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -288,10 +341,22 @@ export default function AllDeals() {
                       </ul>
                     </div>
                     
-                    <button className={`mt-4 w-full ${deal.type === 'Domestic' ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'} text-white py-2 rounded-md transition-colors duration-300`}>
-                      <i className="fas fa-shopping-cart mr-2"></i>
-                      Book Now
-                    </button>
+                    <div className="mt-4 flex gap-2">
+                      <button 
+                        onClick={() => handleAddToCart(deal.id)}
+                        className={`flex-1 ${deal.type === 'Domestic' ? 'bg-green-100 hover:bg-green-200 text-green-800' : 'bg-purple-100 hover:bg-purple-200 text-purple-800'} py-2 rounded-md transition-colors duration-300 flex items-center justify-center`}
+                      >
+                        <i className="fas fa-shopping-cart mr-2"></i>
+                        Add to Cart
+                      </button>
+                      <button 
+                        onClick={() => handleBookNow(deal.id)}
+                        className={`flex-1 ${deal.type === 'Domestic' ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'} text-white py-2 rounded-md transition-colors duration-300 flex items-center justify-center`}
+                      >
+                        <i className="fas fa-bolt mr-2"></i>
+                        Book Now
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
