@@ -1,11 +1,9 @@
-// src/pages/InternationalDeals.tsx
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useScrollTop } from '../hooks/useScrollTop';
 import SidebarFilters from '../components/SidebarFilters';
-import { FaShoppingCart } from 'react-icons/fa';
+import { useLocation } from 'react-router-dom';
 
-// Centralized type definitions
 type Theme = 'Beach' | 'Adventure' | 'Luxury' | 'Romance' | 'Shopping' | 'Cultural';
 
 interface ThemeFilters {
@@ -39,6 +37,7 @@ interface Deal {
 interface CartItem {
   dealId: number;
   quantity: number;
+  dealDetails: Omit<Deal, 'imageUrls' | 'highlights'>;
 }
 
 const WORKING_IMAGE_URLS = {
@@ -75,10 +74,17 @@ const DEFAULT_FILTERS: Filters = {
 
 export default function InternationalDeals() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [filteredDeals, setFilteredDeals] = useState<Deal[]>([]);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [cart, setCart] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    if (location.state?.cartItems) {
+      setCart(location.state.cartItems);
+    }
+  }, [location.state]);
 
   useScrollTop();
 
@@ -118,7 +124,6 @@ export default function InternationalDeals() {
         tags: ['Shopping', 'Luxury']
       }
     ];
-
     setDeals(initialDeals);
     setFilteredDeals(initialDeals);
   }, []);
@@ -156,15 +161,50 @@ export default function InternationalDeals() {
     setFilters(DEFAULT_FILTERS);
   };
 
-  const addToCart = (dealId: number) => {
+  const handleAddToCart = (deal: Deal) => {
     setCart(prev => {
-      const existing = prev.find(item => item.dealId === dealId);
+      const existing = prev.find(item => item.dealId === deal.id);
       if (existing) {
         return prev.map(item =>
-          item.dealId === dealId ? { ...item, quantity: item.quantity + 1 } : item
+          item.dealId === deal.id 
+            ? { ...item, quantity: item.quantity + 1 } 
+            : item
         );
       }
-      return [...prev, { dealId, quantity: 1 }];
+      return [...prev, { 
+        dealId: deal.id, 
+        quantity: 1,
+        dealDetails: {
+          id: deal.id,
+          name: deal.name,
+          duration: deal.duration,
+          price: deal.price,
+          originalPrice: deal.originalPrice,
+          discount: deal.discount,
+          tags: deal.tags
+        }
+      }];
+    });
+  };
+
+  const handleBookNow = (deal: Deal) => {
+    navigate('/checkout', {
+      state: {
+        cartItems: [{
+          dealId: deal.id,
+          quantity: 1,
+          dealDetails: {
+            id: deal.id,
+            name: deal.name,
+            duration: deal.duration,
+            price: deal.price,
+            originalPrice: deal.originalPrice,
+            discount: deal.discount,
+            tags: deal.tags
+          }
+        }],
+        allDeals: deals
+      }
     });
   };
 
@@ -179,32 +219,6 @@ export default function InternationalDeals() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">
-          <i className="fas fa-plane mr-2 text-purple-500"></i>
-          International Travel Deals
-        </h1>
-        <div className="flex gap-4 items-center">
-          <button
-            onClick={goToCart}
-            className="relative text-purple-600 hover:text-purple-800"
-          >
-            <FaShoppingCart size={24} />
-            {cart.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs px-1">
-                {cart.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => navigate(-1)}
-            className="text-blue-600 hover:text-blue-800"
-          >
-            <i className="fas fa-arrow-left mr-2"></i> Back to Home
-          </button>
-        </div>
-      </div>
-
       <div className="flex flex-col md:flex-row gap-8">
         <div className="w-full md:w-64 flex-shrink-0">
           <div className="sticky top-4">
@@ -218,12 +232,40 @@ export default function InternationalDeals() {
         </div>
 
         <div className="flex-1">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">
+              <i className="fas fa-plane mr-2 text-purple-500"></i>
+              International Travel Deals
+            </h1>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <button 
+                  className="flex items-center text-purple-600 hover:text-purple-800"
+                  onClick={goToCart}
+                >
+                  <i className="fas fa-shopping-cart text-2xl"></i>
+                  {cart.length > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {cart.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+              <button 
+                onClick={() => navigate(-1)} 
+                className="flex items-center text-blue-600 hover:text-blue-800"
+              >
+                <i className="fas fa-arrow-left mr-2"></i> Back to Home
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredDeals.length > 0 ? (
               filteredDeals.map((deal) => (
                 <div
                   key={deal.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col"
                 >
                   <div className="h-48 overflow-hidden bg-gray-100 relative">
                     <img
@@ -236,7 +278,7 @@ export default function InternationalDeals() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                   </div>
 
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-grow">
                     <div className="flex justify-between items-start mb-2">
                       <h2 className="text-xl font-bold">{deal.name}</h2>
                       <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">
@@ -254,7 +296,7 @@ export default function InternationalDeals() {
                       <span className="ml-2 text-gray-500 line-through">{deal.originalPrice}</span>
                     </div>
 
-                    <div className="border-t border-gray-200 pt-3">
+                    <div className="border-t border-gray-200 pt-3 flex-grow">
                       <h3 className="font-semibold mb-2">
                         <i className="fas fa-star mr-2 text-yellow-400"></i>
                         Package Highlights:
@@ -269,13 +311,24 @@ export default function InternationalDeals() {
                       </ul>
                     </div>
 
-                    <button
-                      onClick={() => addToCart(deal.id)}
-                      className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md transition-colors duration-300"
-                    >
-                      <i className="fas fa-cart-plus mr-2"></i>
-                      Add to Cart
-                    </button>
+                    <div className="mt-4 pt-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleAddToCart(deal)}
+                          className="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 rounded-md transition-colors duration-300 flex items-center justify-center"
+                        >
+                          <i className="fas fa-shopping-cart mr-2"></i>
+                          Add to Cart
+                        </button>
+                        <button
+                          onClick={() => handleBookNow(deal)}
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md transition-colors duration-300 flex items-center justify-center"
+                        >
+                          <i className="fas fa-bolt mr-2"></i>
+                          Book Now
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))

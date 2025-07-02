@@ -17,6 +17,9 @@ import DomesticDeals from './pages/DomesticDeals.tsx';
 import InternationalDeals from './pages/InternationalDeals.tsx'
 import Test from './pages/Test.tsx'
 import CartPage from './pages/CartPage.tsx';
+import CheckoutPage from './pages/CheckoutPage.tsx';
+import ConfirmationPage from './pages/ConfirmationPage.tsx';
+import MyBookingsPage from './pages/MyBookingsPage.tsx';
 
 const App: React.FC = () => {
   // State to manage sidebar visibility
@@ -47,7 +50,9 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFound />} />
              <Route path="/test" element={<Test />} />
              <Route path="/cart" element={<CartPage />} />
-
+             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/confirmation" element={<ConfirmationPage />} />
+            <Route path="/my-bookings" element={<MyBookingsPage />} />
           </Routes>
         </main>
         <Footer />
