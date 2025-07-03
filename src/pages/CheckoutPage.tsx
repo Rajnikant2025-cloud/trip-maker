@@ -4,12 +4,25 @@ import { useLocation, useNavigate } from 'react-router-dom';
 interface CartItem {
   dealId: number;
   quantity: number;
+  dealDetails: {
+    id: number;
+    name: string;
+    price: string;
+    duration: string;
+    originalPrice: string;
+    discount: string;
+    tags: string[];
+  };
 }
 
 interface Deal {
   id: number;
   name: string;
   price: string;
+  duration: string;
+  originalPrice: string;
+  discount: string;
+  tags: string[];
 }
 
 interface LocationState {
@@ -55,12 +68,20 @@ const CheckoutPage = () => {
         state: {
           orderId: `TRIP-${Math.floor(Math.random() * 1000000)}`,
           totalPrice,
-          items: allDeals.filter(deal => 
-            cartItems.some(item => item.dealId === deal.id)
-          )
+          items: cartItems.map(item => {
+            const deal = allDeals.find(d => d.id === item.dealId);
+            return {
+              ...item,
+              dealDetails: deal || item.dealDetails
+            };
+          })
         }
       });
     }, 2000);
+  };
+
+  const parsePrice = (priceStr: string): number => {
+    return parseInt(priceStr.replace(/[^\d]/g, ''), 10);
   };
 
   if (orderSuccess) {
@@ -211,19 +232,20 @@ const CheckoutPage = () => {
           </h2>
           
           <div className="space-y-3 mb-4">
-            {allDeals
-              .filter(deal => cartItems.some(item => item.dealId === deal.id))
-              .map(deal => {
-                const item = cartItems.find(c => c.dealId === deal.id);
-                return (
-                  <div key={deal.id} className="flex justify-between">
-                    <span className="text-gray-600">
-                      {deal.name} × {item?.quantity}
-                    </span>
-                    <span>{deal.price}</span>
-                  </div>
-                );
-              })}
+            {cartItems.map(item => {
+              const deal = allDeals.find(d => d.id === item.dealId) || item.dealDetails;
+              const priceNum = parsePrice(deal.price);
+              const itemTotal = priceNum * item.quantity;
+              
+              return (
+                <div key={item.dealId} className="flex justify-between">
+                  <span className="text-gray-600">
+                    {deal.name} × {item.quantity}
+                  </span>
+                  <span>₹{itemTotal.toLocaleString('en-IN')}</span>
+                </div>
+              );
+            })}
           </div>
           
           <div className="border-t pt-3">

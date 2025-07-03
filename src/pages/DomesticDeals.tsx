@@ -15,6 +15,12 @@ interface Deal {
   tags?: string[];
 }
 
+interface CartItem {
+  dealId: number;
+  quantity: number;
+  dealDetails: Omit<Deal, 'imageUrls' | 'highlights'>;
+}
+
 const WORKING_IMAGE_URLS = {
   goa: [
     'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
@@ -32,11 +38,6 @@ const WORKING_IMAGE_URLS = {
     'https://source.unsplash.com/800x500/?himalayas,manali,leh'
   ]
 };
-
-interface CartItem {
-  dealId: number;
-  quantity: number;
-}
 
 export default function DomesticDeals() {
   const navigate = useNavigate();
@@ -143,15 +144,71 @@ export default function DomesticDeals() {
     }
   };
 
-  const handleAddToCart = (dealId: number) => {
-    setCartItems((prev) => {
-      const existing = prev.find(item => item.dealId === dealId);
+  const calculateTotalPrice = (items: CartItem[]): number => {
+    return items.reduce((sum, item) => {
+      const deal = deals.find(d => d.id === item.dealId);
+      if (!deal) return sum;
+      const priceNum = parseInt(deal.price.replace(/[^\d]/g, ''), 10);
+      return sum + (priceNum * item.quantity);
+    }, 0);
+  };
+
+  const handleAddToCart = (deal: Deal) => {
+    setCartItems(prev => {
+      const existing = prev.find(item => item.dealId === deal.id);
       if (existing) {
         return prev.map(item =>
-          item.dealId === dealId ? { ...item, quantity: item.quantity + 1 } : item
+          item.dealId === deal.id 
+            ? { ...item, quantity: item.quantity + 1 } 
+            : item
         );
-      } else {
-        return [...prev, { dealId, quantity: 1 }];
+      }
+      return [...prev, { 
+        dealId: deal.id, 
+        quantity: 1,
+        dealDetails: {
+          id: deal.id,
+          name: deal.name,
+          duration: deal.duration,
+          price: deal.price,
+          originalPrice: deal.originalPrice,
+          discount: deal.discount,
+          tags: deal.tags || []
+        }
+      }];
+    });
+  };
+
+  const handleBookNow = (deal: Deal) => {
+    const cartItems = [{
+      dealId: deal.id,
+      quantity: 1,
+      dealDetails: {
+        id: deal.id,
+        name: deal.name,
+        duration: deal.duration,
+        price: deal.price,
+        originalPrice: deal.originalPrice,
+        discount: deal.discount,
+        tags: deal.tags || []
+      }
+    }];
+    
+    navigate('/checkout', {
+      state: {
+        cartItems,
+        allDeals: deals,
+        totalPrice: calculateTotalPrice(cartItems)
+      }
+    });
+  };
+
+  const goToCart = () => {
+    navigate('/cart', {
+      state: {
+        cartItems,
+        allDeals: deals,
+        totalPrice: calculateTotalPrice(cartItems)
       }
     });
   };
@@ -175,7 +232,7 @@ export default function DomesticDeals() {
               <div className="relative">
                 <button 
                   className="flex items-center text-green-600 hover:text-green-800"
-                  onClick={() => navigate('/cart', { state: { cartItems, allDeals: deals } })}
+                  onClick={goToCart}
                 >
                   <i className="fas fa-shopping-cart text-2xl"></i>
                   {cartItems.length > 0 && (
@@ -244,14 +301,15 @@ export default function DomesticDeals() {
 
                     <div className="mt-4 flex gap-2">
                       <button 
-                        onClick={() => handleAddToCart(deal.id)}
+                        onClick={() => handleAddToCart(deal)}
                         className="flex-1 bg-green-100 hover:bg-green-200 text-green-800 py-2 rounded-md transition-colors duration-300 flex items-center justify-center"
                       >
                         <i className="fas fa-shopping-cart mr-2"></i>
                         Add to Cart
                       </button>
                       <button 
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-md transition-colors duration-300"
+                        onClick={() => handleBookNow(deal)}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-md transition-colors duration-300 flex items-center justify-center"
                       >
                         <i className="fas fa-bolt mr-2"></i>
                         Book Now

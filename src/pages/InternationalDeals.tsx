@@ -144,6 +144,15 @@ export default function InternationalDeals() {
     setFilteredDeals(filtered);
   }, [deals, filters]);
 
+  const calculateTotalPrice = (items: CartItem[]): number => {
+    return items.reduce((sum, item) => {
+      const deal = deals.find(d => d.id === item.dealId);
+      if (!deal) return sum;
+      const priceNum = parseInt(deal.price.replace(/[^\d]/g, ''), 10);
+      return sum + (priceNum * item.quantity);
+    }, 0);
+  };
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>, deal: Deal) => {
     const img = e.target as HTMLImageElement;
     const currentSrc = img.src;
@@ -188,22 +197,25 @@ export default function InternationalDeals() {
   };
 
   const handleBookNow = (deal: Deal) => {
+    const cartItems = [{
+      dealId: deal.id,
+      quantity: 1,
+      dealDetails: {
+        id: deal.id,
+        name: deal.name,
+        duration: deal.duration,
+        price: deal.price,
+        originalPrice: deal.originalPrice,
+        discount: deal.discount,
+        tags: deal.tags
+      }
+    }];
+    
     navigate('/checkout', {
       state: {
-        cartItems: [{
-          dealId: deal.id,
-          quantity: 1,
-          dealDetails: {
-            id: deal.id,
-            name: deal.name,
-            duration: deal.duration,
-            price: deal.price,
-            originalPrice: deal.originalPrice,
-            discount: deal.discount,
-            tags: deal.tags
-          }
-        }],
-        allDeals: deals
+        cartItems,
+        allDeals: deals,
+        totalPrice: calculateTotalPrice(cartItems)
       }
     });
   };
@@ -212,7 +224,8 @@ export default function InternationalDeals() {
     navigate('/cart', {
       state: {
         cartItems: cart,
-        allDeals: deals
+        allDeals: deals,
+        totalPrice: calculateTotalPrice(cart)
       }
     });
   };

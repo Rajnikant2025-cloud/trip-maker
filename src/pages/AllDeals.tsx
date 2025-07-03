@@ -4,8 +4,6 @@ import { useScrollTop } from '../hooks/useScrollTop';
 import SidebarFilters, { Filters } from '../components/SidebarFilters';
 import { useLocation } from 'react-router-dom';
 
-
-
 interface Deal {
   id: number;
   name: string;
@@ -18,6 +16,12 @@ interface Deal {
   highlights: string[];
   tags: string[];
   imageUrls: string[];
+}
+
+interface CartItem {
+  dealId: number;
+  quantity: number;
+  dealDetails: Omit<Deal, 'imageUrls' | 'highlights'>;
 }
 
 const WORKING_IMAGE_URLS = {
@@ -63,20 +67,14 @@ export default function AllDeals() {
     }
   });
   const [filteredDeals, setFilteredDeals] = useState<Deal[]>([]);
-  type CartItem = {
-  dealId: number;
-  quantity: number;
-};
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-const [cartItems, setCartItems] = useState<CartItem[]>([]);
-
- // Initialize cart from navigation state
+  // Initialize cart from navigation state
   useEffect(() => {
     if (location.state?.cartItems) {
       setCartItems(location.state.cartItems);
     }
   }, [location.state]);
-
 
   useScrollTop();
 
@@ -222,23 +220,77 @@ const [cartItems, setCartItems] = useState<CartItem[]>([]);
     }
   };
 
- const handleAddToCart = (dealId: number) => {
-  setCartItems((prev) => {
-    const existing = prev.find(item => item.dealId === dealId);
-    if (existing) {
-      return prev.map(item =>
-        item.dealId === dealId
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      );
-    } else {
-      return [...prev, { dealId, quantity: 1 }];
-    }
-  });
-};
+  const calculateTotalPrice = (items: CartItem[]): number => {
+    return items.reduce((sum, item) => {
+      const deal = deals.find(d => d.id === item.dealId);
+      if (!deal) return sum;
+      const priceNum = parseInt(deal.price.replace(/[^\d]/g, ''), 10);
+      return sum + (priceNum * item.quantity);
+    }, 0);
+  };
 
-  const handleBookNow = (dealId: number) => {
-    navigate(`/booking/${dealId}`);
+  const handleAddToCart = (deal: Deal) => {
+    setCartItems(prev => {
+      const existing = prev.find(item => item.dealId === deal.id);
+      if (existing) {
+        return prev.map(item =>
+          item.dealId === deal.id 
+            ? { ...item, quantity: item.quantity + 1 } 
+            : item
+        );
+      }
+      return [...prev, { 
+        dealId: deal.id, 
+        quantity: 1,
+        dealDetails: {
+          id: deal.id,
+          name: deal.name,
+          type: deal.type,
+          location: deal.location,
+          duration: deal.duration,
+          price: deal.price,
+          originalPrice: deal.originalPrice,
+          discount: deal.discount,
+          tags: deal.tags
+        }
+      }];
+    });
+  };
+
+  const handleBookNow = (deal: Deal) => {
+    const cartItems = [{
+      dealId: deal.id,
+      quantity: 1,
+      dealDetails: {
+        id: deal.id,
+        name: deal.name,
+        type: deal.type,
+        location: deal.location,
+        duration: deal.duration,
+        price: deal.price,
+        originalPrice: deal.originalPrice,
+        discount: deal.discount,
+        tags: deal.tags
+      }
+    }];
+    
+    navigate('/checkout', {
+      state: {
+        cartItems,
+        allDeals: deals,
+        totalPrice: calculateTotalPrice(cartItems)
+      }
+    });
+  };
+
+  const goToCart = () => {
+    navigate('/cart', {
+      state: {
+        cartItems,
+        allDeals: deals,
+        totalPrice: calculateTotalPrice(cartItems)
+      }
+    });
   };
 
   return (
@@ -263,17 +315,16 @@ const [cartItems, setCartItems] = useState<CartItem[]>([]);
             <div className="flex items-center gap-4">
               <div className="relative">
                 <button 
-  className="flex items-center text-blue-600 hover:text-blue-800"
-  onClick={() => navigate('/cart', { state: { cartItems, allDeals: deals } })}
->
-  <i className="fas fa-shopping-cart text-2xl"></i>
-  {cartItems.length > 0 && (
-    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-      {cartItems.length}
-    </span>
-  )}
-</button>
-
+                  className="flex items-center text-blue-600 hover:text-blue-800"
+                  onClick={goToCart}
+                >
+                  <i className="fas fa-shopping-cart text-2xl"></i>
+                  {cartItems.length > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {cartItems.length}
+                    </span>
+                  )}
+                </button>
               </div>
               <button 
                 onClick={() => navigate(-1)} 
@@ -343,14 +394,14 @@ const [cartItems, setCartItems] = useState<CartItem[]>([]);
                     
                     <div className="mt-4 flex gap-2">
                       <button 
-                        onClick={() => handleAddToCart(deal.id)}
+                        onClick={() => handleAddToCart(deal)}
                         className={`flex-1 ${deal.type === 'Domestic' ? 'bg-green-100 hover:bg-green-200 text-green-800' : 'bg-purple-100 hover:bg-purple-200 text-purple-800'} py-2 rounded-md transition-colors duration-300 flex items-center justify-center`}
                       >
                         <i className="fas fa-shopping-cart mr-2"></i>
                         Add to Cart
                       </button>
                       <button 
-                        onClick={() => handleBookNow(deal.id)}
+                        onClick={() => handleBookNow(deal)}
                         className={`flex-1 ${deal.type === 'Domestic' ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'} text-white py-2 rounded-md transition-colors duration-300 flex items-center justify-center`}
                       >
                         <i className="fas fa-bolt mr-2"></i>
