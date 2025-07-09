@@ -51,6 +51,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, cartItemCount = 0 }) => 
           >
             <i className="fas fa-envelope mr-2"></i> Contact
           </NavLink>
+          <NavLink
+            to="/signup"
+            className={({ isActive }) =>
+              `flex items-center ${isActive ? 'text-white' : 'text-indigo-100'} hover:text-white`
+            }
+          >
+            <i className="fas fa-user-plus mr-2"></i> Sign Up
+          </NavLink>
           
           {/* Cart Icon with Badge */}
           <NavLink

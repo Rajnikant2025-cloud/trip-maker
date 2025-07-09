@@ -20,6 +20,11 @@ import CartPage from './pages/CartPage.tsx';
 import CheckoutPage from './pages/CheckoutPage.tsx';
 import ConfirmationPage from './pages/ConfirmationPage.tsx';
 import MyBookingsPage from './pages/MyBookingsPage.tsx';
+import Signup from './pages/Signup.tsx';
+// import { LogIn } from 'lucide-react';
+import Login from './pages/Login.tsx';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 const App: React.FC = () => {
   // State to manage sidebar visibility
@@ -53,6 +58,11 @@ const App: React.FC = () => {
              <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/confirmation" element={<ConfirmationPage />} />
             <Route path="/my-bookings" element={<MyBookingsPage />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login/>}/>
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
           </Routes>
         </main>
         <Footer />

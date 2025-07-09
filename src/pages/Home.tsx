@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -9,7 +10,155 @@ import { useStore } from 'zustand';
 import { filterStore } from '../store/filterStore';
 import { useScrollTop } from '../hooks/useScrollTop';
 import { Link } from 'react-router-dom';
-//
+
+// Types
+type Destination = {
+  id: number;
+  name: string;
+  duration: string;
+  hotelRating: string;
+  meals: string;
+  activities: string[];
+  emi: string;
+  originalPrice: string;
+  discountedPrice: string;
+  image: string;
+  activitiesCount: string;
+};
+
+type Package = {
+  id: number;
+  name: string;
+  price: number;
+  type: string;
+  image: string;
+  duration: number;
+  starRating: number;
+  preference: string;
+  activities: string[];
+};
+
+type BookableItem = Destination | Package;
+
+// Booking Modal Component
+const BookingModal = ({ 
+  item, 
+  onClose, 
+  onConfirm 
+}: {
+  item: BookableItem;
+  onClose: () => void;
+  onConfirm: (travelers: number, date: string, specialRequests: string) => void;
+}) => {
+  const [travelers, setTravelers] = useState(1);
+  const [date, setDate] = useState('');
+  const [specialRequests, setSpecialRequests] = useState('');
+
+  const isPackage = (item: BookableItem): item is Package => {
+    return 'price' in item;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-modal-in">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold">
+            <i className="fas fa-suitcase text-blue-500 mr-2"></i>
+            Book {item.name}
+          </h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div className="mb-4">
+          <p className="font-semibold">
+            <i className="fas fa-rupee-sign mr-2 text-green-500"></i>
+            Price: {isPackage(item) ? `₹${item.price}` : item.discountedPrice}
+          </p>
+          <p className="text-sm text-gray-600">
+            <i className="far fa-clock mr-2"></i>
+            Duration: {isPackage(item) ? `${item.duration} days` : item.duration}
+          </p>
+          {isPackage(item) ? (
+            <p className="text-sm text-gray-600 mt-1">
+              <i className="fas fa-star text-yellow-400 mr-2"></i>
+              {item.starRating} Star{item.starRating > 1 ? 's' : ''}
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600 mt-1">
+              <i className="fas fa-star text-yellow-400 mr-2"></i>
+              {item.hotelRating}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block font-medium mb-1">
+              <i className="fas fa-users mr-2 text-blue-500"></i>
+              Number of Travelers
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={travelers}
+              onChange={(e) => setTravelers(Number(e.target.value))}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">
+              <i className="far fa-calendar-alt mr-2 text-blue-500"></i>
+              Travel Date
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">
+              <i className="fas fa-edit mr-2 text-blue-500"></i>
+              Special Requests
+            </label>
+            <textarea
+              value={specialRequests}
+              onChange={(e) => setSpecialRequests(e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={3}
+              placeholder="Any special requirements or preferences..."
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(travelers, date, specialRequests)}
+            disabled={!date}
+            className={`px-4 py-2 rounded-md text-white ${date ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-400 cursor-not-allowed'} transition-colors`}
+          >
+            Confirm Booking
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Hero slider images
 const sliderImages = [
@@ -47,7 +196,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 // Mock packages data
-const packages = [
+const packages: Package[] = [
   { 
     id: 1, 
     name: 'Goa Beach Getaway', 
@@ -84,7 +233,7 @@ const packages = [
 ];
 
 // Popular destinations
-const popularDestinations = [
+const popularDestinations: Destination[] = [
   {
     id: 1,
     name: 'The Ultimate Price Slash Goa',
@@ -141,12 +290,15 @@ const popularDestinations = [
 
 const Home: React.FC = () => {
   useScrollTop();
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<BookableItem | null>(null);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
 
   // Filter state
   const { travelers, budget, travelType, travelDate, duration, starRating, preference, setTravelers, setBudget, setTravelType, setTravelDate, setDuration, setStarRating, setPreference } = useStore(filterStore);
 
   // Form setup
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { travelers, budget, travelType, travelDate, duration, starRating, preference },
   });
@@ -171,6 +323,20 @@ const Home: React.FC = () => {
       (preference === 'Any' || pkg.preference === preference)
   );
 
+  // Handle category click
+  const handleCategoryClick = (category: string) => {
+    setValue('travelType', category);
+    setTravelType(category);
+    
+    // Scroll to packages section
+    setTimeout(() => {
+      const packagesSection = document.getElementById('recommended-packages');
+      if (packagesSection) {
+        packagesSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   // Slider settings
   const sliderSettings = {
     dots: true,
@@ -183,14 +349,57 @@ const Home: React.FC = () => {
     fade: true,
   };
 
+  const handleBookNow = (item: BookableItem) => {
+    setSelectedItem(item);
+    setShowBookingModal(true);
+    setBookingSuccess(false);
+  };
+
+  const handleConfirmBooking = (travelers: number, date: string, specialRequests: string) => {
+    if (!selectedItem) return;
+
+    const bookingDetails = {
+      item: selectedItem.name,
+      type: 'price' in selectedItem ? 'package' : 'destination',
+      travelers,
+      date,
+      specialRequests,
+      price: 'discountedPrice' in selectedItem 
+        ? selectedItem.discountedPrice 
+        : `₹${(selectedItem as Package).price}`
+    };
+
+    console.log('Booking confirmed:', bookingDetails);
+    
+    setShowBookingModal(false);
+    setBookingSuccess(true);
+    setTimeout(() => setBookingSuccess(false), 3000);
+  };
+
   return (
-    <div className="space-y-16">
-      {/* Add Font Awesome CSS */}
+    <div className="space-y-16 relative">
       <Helmet>
         <title>TripMaker - Budget-Friendly Travel Plans</title>
         <meta name="description" content="Plan your dream trip with TripMaker. Filter by budget, travelers, and travel type to find the best packages." />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </Helmet>
+
+      {/* Success Notification */}
+      {bookingSuccess && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50 animate-fade-in-out flex items-center">
+          <i className="fas fa-check-circle mr-2"></i>
+          Booking confirmed successfully!
+        </div>
+      )}
+
+      {/* Booking Modal */}
+      {showBookingModal && selectedItem && (
+        <BookingModal
+          item={selectedItem}
+          onClose={() => setShowBookingModal(false)}
+          onConfirm={handleConfirmBooking}
+        />
+      )}
 
       {/* Hero Section with Slider */}
       <section className="relative h-[70vh]">
@@ -335,28 +544,33 @@ const Home: React.FC = () => {
             { 
               category: 'Domestic', 
               icon: 'home',
-              image: 'https://images.unsplash.com/photo-1503917988258-f87a78e3c995?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' 
+              image: 'https://images.unsplash.com/photo-1503917988258-f87a78e3c995?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+              travelType: 'Domestic'
             },
             { 
               category: 'International', 
               icon: 'globe',
-              image: 'https://images.unsplash.com/photo-1431274172761-fca41d930114?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' 
+              image: 'https://images.unsplash.com/photo-1431274172761-fca41d930114?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+              travelType: 'International'
             },
             { 
               category: 'Honeymoon', 
               icon: 'heart',
-              image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' 
+              image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+              travelType: 'Honeymoon'
             },
             { 
               category: 'Adventure', 
               icon: 'mountain',
-              image: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' 
+              image: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+              travelType: 'Adventure'
             }
           ].map((item, idx) => (
             <div
               key={item.category}
               className="relative bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300"
               style={{ animationDelay: `${idx * 100}ms` }}
+              onClick={() => handleCategoryClick(item.travelType)}
             >
               <img
                 src={item.image}
@@ -377,128 +591,131 @@ const Home: React.FC = () => {
 
       {/* Popular Destinations Section */}
       <section className="max-w-6xl mx-auto px-6 py-12 animate-slide-up relative">
-  <div className="flex justify-between items-center mb-8">
-    <h2 className="text-3xl font-bold text-center w-full">
-      <i className="fas fa-bolt text-yellow-500 mr-2"></i>Deal of the day
-    </h2>
-    <div className="absolute right-6 top-12 group">
-  <button className="flex items-center text-primary font-semibold bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all">
-    View All <i className="fas fa-chevron-down ml-2 text-sm"></i>
-  </button>
-  <div className="absolute right-0 mt-1 w-48 bg-white shadow-lg rounded-md py-1 z-10 hidden group-hover:block border border-gray-100">
-    <Link 
-      to="/alldeals" 
-      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
-    >
-      <i className="fas fa-list mr-2"></i>All Deals
-    </Link>
-    <Link 
-      to="/domestic-deals" 
-      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
-    >
-      <i className="fas fa-home mr-2"></i>Domestic
-    </Link>
-    <Link 
-      to="/international-deals" 
-      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
-    >
-      <i className="fas fa-plane mr-2"></i>International
-    </Link>
-  </div>
-</div>
-  </div>
-  
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    {popularDestinations.map((destination) => (
-      <div key={destination.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300 flex flex-col">
-        <div className="relative">
-          <img 
-            src={destination.image} 
-            alt={destination.name} 
-            className="w-full h-48 object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=Travel+Image';
-            }}
-          />
-          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-bold">
-            <i className="fas fa-clock mr-1"></i>Deal of the day
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold text-center w-full">
+            <i className="fas fa-bolt text-yellow-500 mr-2"></i>Deal of the day
+          </h2>
+          <div className="absolute right-6 top-12 group">
+            <button className="flex items-center text-primary font-semibold bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all">
+              View All <i className="fas fa-chevron-down ml-2 text-sm"></i>
+            </button>
+            <div className="absolute right-0 mt-1 w-48 bg-white shadow-lg rounded-md py-1 z-10 hidden group-hover:block border border-gray-100">
+              <Link 
+                to="/alldeals" 
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
+              >
+                <i className="fas fa-list mr-2"></i>All Deals
+              </Link>
+              <Link 
+                to="/domestic-deals" 
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
+              >
+                <i className="fas fa-home mr-2"></i>Domestic
+              </Link>
+              <Link 
+                to="/international-deals" 
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
+              >
+                <i className="fas fa-plane mr-2"></i>International
+              </Link>
+            </div>
           </div>
         </div>
         
-        <div className="p-4 flex flex-col flex-grow">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-bold">
-              <i className="fas fa-map-marker-alt text-blue-500 mr-2"></i>
-              {destination.name}
-            </h3>
-            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-              <i className="far fa-calendar-alt mr-1"></i>
-              {destination.duration}
-            </span>
-          </div>
-          
-          <div className="flex items-center text-sm text-gray-600 mb-2">
-            <span className="mr-2">
-              <i className="fas fa-star text-yellow-400 mr-1"></i>
-              {destination.hotelRating}
-            </span>
-            <span>•</span>
-            <span className="ml-2">
-              <i className="fas fa-utensils text-orange-400 mr-1"></i>
-              {destination.meals}
-            </span>
-          </div>
-          
-          <div className="border-t border-b border-gray-100 py-3 my-3">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-semibold text-sm">
-                <i className="fas fa-tasks text-purple-500 mr-2"></i>
-                Activities:
-              </h4>
-              <span className="text-xs text-gray-500">
-                <i className="fas fa-list-ol mr-1"></i>
-                {destination.activitiesCount}
-              </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {popularDestinations.map((destination) => (
+            <div key={destination.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300 flex flex-col">
+              <div className="relative">
+                <img 
+                  src={destination.image} 
+                  alt={destination.name} 
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=Travel+Image';
+                  }}
+                />
+                <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-bold">
+                  <i className="fas fa-clock mr-1"></i>Deal of the day
+                </div>
+              </div>
+              
+              <div className="p-4 flex flex-col flex-grow">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-bold">
+                    <i className="fas fa-map-marker-alt text-blue-500 mr-2"></i>
+                    {destination.name}
+                  </h3>
+                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    <i className="far fa-calendar-alt mr-1"></i>
+                    {destination.duration}
+                  </span>
+                </div>
+                
+                <div className="flex items-center text-sm text-gray-600 mb-2">
+                  <span className="mr-2">
+                    <i className="fas fa-star text-yellow-400 mr-1"></i>
+                    {destination.hotelRating}
+                  </span>
+                  <span>•</span>
+                  <span className="ml-2">
+                    <i className="fas fa-utensils text-orange-400 mr-1"></i>
+                    {destination.meals}
+                  </span>
+                </div>
+                
+                <div className="border-t border-b border-gray-100 py-3 my-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold text-sm">
+                      <i className="fas fa-tasks text-purple-500 mr-2"></i>
+                      Activities:
+                    </h4>
+                    <span className="text-xs text-gray-500">
+                      <i className="fas fa-list-ol mr-1"></i>
+                      {destination.activitiesCount}
+                    </span>
+                  </div>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    {destination.activities.map((activity, i) => (
+                      <li key={i} className="flex items-center">
+                        <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                        {activity}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <p className="text-sm text-green-600 font-semibold mb-2">
+                  <i className="fas fa-credit-card mr-2"></i>
+                  {destination.emi}
+                </p>
+                
+                <div className="flex justify-between items-center mt-auto">
+                  <div>
+                    <p className="text-sm text-gray-500 line-through">
+                      <i className="fas fa-tag mr-1"></i>
+                      {destination.originalPrice}
+                    </p>
+                    <p className="text-lg font-bold text-gray-900">
+                      <i className="fas fa-rupee-sign mr-1"></i>
+                      {destination.discountedPrice}
+                    </p>
+                  </div>
+                  <button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors h-fit"
+                    onClick={() => handleBookNow(destination)}
+                  >
+                    <i className="fas fa-shopping-cart mr-2"></i>
+                    Book Now
+                  </button>
+                </div>
+              </div>
             </div>
-            <ul className="text-sm text-gray-600 space-y-1">
-              {destination.activities.map((activity, i) => (
-                <li key={i} className="flex items-center">
-                  <i className="fas fa-check-circle text-green-500 mr-2"></i>
-                  {activity}
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <p className="text-sm text-green-600 font-semibold mb-2">
-            <i className="fas fa-credit-card mr-2"></i>
-            {destination.emi}
-          </p>
-          
-          <div className="flex justify-between items-center mt-auto">
-            <div>
-              <p className="text-sm text-gray-500 line-through">
-                <i className="fas fa-tag mr-1"></i>
-                {destination.originalPrice}
-              </p>
-              <p className="text-lg font-bold text-gray-900">
-                <i className="fas fa-rupee-sign mr-1"></i>
-                {destination.discountedPrice}
-              </p>
-            </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors h-fit">
-              <i className="fas fa-shopping-cart mr-2"></i>
-              Book Now
-            </button>
-          </div>
+          ))}
         </div>
-      </div>
-    ))}
-  </div>
-</section>
+      </section>
 
       {/* Recommended Packages Section */}
-      <section className="max-w-6xl mx-auto px-6 py-12 bg-background rounded-lg animate-slide-up">
+      <section id="recommended-packages" className="max-w-6xl mx-auto px-6 py-12 bg-background rounded-lg animate-slide-up">
         <h2 className="text-3xl font-bold text-center mb-8">
           <i className="fas fa-star text-yellow-400 mr-2"></i>Recommended Packages
         </h2>
@@ -552,7 +769,7 @@ const Home: React.FC = () => {
                   </div>
                   <button
                     className="mt-4 w-full bg-primary text-white px-4 py-2 rounded hover:bg-teal-700 transition-all duration-300"
-                    onClick={() => alert(`Book ${pkg.name} now!`)}
+                    onClick={() => handleBookNow(pkg)}
                   >
                     <i className="fas fa-bookmark mr-2"></i>Book Now
                   </button>
